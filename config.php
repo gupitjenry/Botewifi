@@ -3,7 +3,7 @@
 // Basic DB config
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
-define('DB_PASS', 'your_strong_password_here'); // ← set your real password
+define('DB_PASS', 'YOUR_MYSQL_PASSWORD'); // ← set your real password
 define('DB_NAME', 'bottle_wifi_vendo');
 define('DB_LOG_FILE', '/var/log/bottle-wifi.log');
 
