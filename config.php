@@ -1,67 +1,49 @@
 <!-- ============= FILE 1: config.php ============= -->
 <?php
-// config.php
+// Basic DB config
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
-define('DB_PASS', 'your_strong_password_here');
+define('DB_PASS', 'your_strong_password_here'); // ← set your real password
 define('DB_NAME', 'bottle_wifi_vendo');
 define('DB_LOG_FILE', '/var/log/bottle-wifi.log');
 
-// Sensor Settings
-define('SENSOR_PIN', 17); // GPIO17 for E3F-DS100C4
+// Sensor settings
+define('SENSOR_PIN', 17);
 define('MINUTES_PER_BOTTLE', 5);
-define('MAX_SESSION_TIME', 240); // 4 hours
-define('SESSION_CHECK_INTERVAL', 60); // Check every 60 seconds
+define('MAX_SESSION_TIME', 240);
+define('SESSION_CHECK_INTERVAL', 60);
 
-// System Settings
+// System settings
 define('ADMIN_USERNAME', 'admin');
-define('ADMIN_PASSWORD', '1234'); // password
+define('ADMIN_PASSWORD', '1234');
 
+// DB connection
 function getDB() {
     static $pdo = null;
     if ($pdo === null) {
-        try {
-            $pdo = new PDO( 
-                "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
-                DB_USER,
-                DB_PASS,
-                [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-            );
-        } catch (PDOException $e) {
-            die("Database connection failed: " . $e->getMessage());
-        }
+        $pdo = new PDO(
+            "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
+            DB_USER,
+            DB_PASS,
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+        );
     }
     return $pdo;
 }
 
+// Client info helpers
 function getClientMAC() {
-    // Try to get MAC address from various sources
     $mac = '';
-    
-    // Method 1: From ARP table (Linux)
-    $ip = $_SERVER['REMOTE_ADDR'];
-    $command = "arp -a " . escapeshellarg($ip);
-    $output = shell_exec($command);
-    
-    if (preg_match('/([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})/', $output, $matches)) {
-        $mac = $matches[0];
+    $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+    $output = shell_exec("arp -a " . escapeshellarg($ip));
+    if (preg_match('/([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})/', $output, $m)) {
+        $mac = $m[0];
     }
-    
-    // Fallback: Use IP if MAC not available
-    if (empty($mac)) {
-        $mac = 'IP_' . str_replace('.', '_', $ip);
-    }
-    
-    return strtoupper($mac);
+    return strtoupper($mac ?: 'IP_' . str_replace('.', '_', $ip));
 }
 
 function getClientIP() {
-    $ip = $_SERVER['REMOTE_ADDR'];
-    if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
-        $ip = $_SERVER['HTTP_CLIENT_IP'];
-    } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-        $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-    }
+    $ip = $_SERVER['HTTP_CLIENT_IP'] ?? $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '';
     return $ip;
 }
 ?>
